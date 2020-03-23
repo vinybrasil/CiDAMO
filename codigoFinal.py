@@ -67,28 +67,33 @@ def arrumador_categoricas(db):
 
 def criaModelo(y, labels):
     return LinearRegression().fit(y, labels)
-    
-    
+def testar(modelo, dadostestaveis):  
+    return modelo.predict(dadostestaveis)
 def main():
     DADOS_TREINO = pd.read_csv("dados/escore_treino.csv")
     DADOS_SEMNA = limpar_dados(DADOS_TREINO)
-    RESPOSTA = input("É a fase de treino?\n")
+  
+    print("Fase de treinamento iniciada.")
     
-    if RESPOSTA == "y":
-        print("Fase de treinamento iniciada.")
-        TREINO, TESTE = divisor(DADOS_SEMNA)   
-        DADOS_SEMLABELS, DADOS_LABELS = arrumador_treinos(TREINO)
-        DADOS_SEMLABELS_TESTE, DADOS_LABELS_TESTE = arrumador_treinos(TESTE)
-        DADOS_PRONTOS = arrumador_categoricas(DADOS_SEMLABELS)
-        print(DADOS_PRONTOS.shape) #tirei o estado civil
-        model = criaModelo(DADOS_PRONTOS, DADOS_LABELS)
-        yhat = model.predict(DADOS_PRONTOS)
-        print(r2_score(DADOS_LABELS, yhat))
-    else:
-        print("Vejo que você está testando, então. ")
+    TREINO, TESTE = divisor(DADOS_SEMNA)   
+    DADOS_SEMLABELS, DADOS_LABELS = arrumador_treinos(TREINO)
+    DADOS_SEMLABELS_TESTE, DADOS_LABELS_TESTE = arrumador_treinos(TESTE)
+    DADOS_PRONTOS = arrumador_categoricas(DADOS_SEMLABELS)
+    print(DADOS_PRONTOS.shape) #tirei o estado civil
+    model = criaModelo(DADOS_PRONTOS, DADOS_LABELS)
+    yhat = testar(model, DADOS_PRONTOS)
+    print("O R2 do treino deu:", r2_score(DADOS_LABELS, yhat))
+    DADOS_TREINO_PRONTO = arrumador_categoricas(DADOS_SEMLABELS_TESTE)
+    yhatteste = testar(model, DADOS_TREINO_PRONTO)
+    print("O R2 do teste deu: ", r2_score(DADOS_LABELS_TESTE, yhatteste))
     
-    
-
+    DADOS_TRAB = pd.read_csv("dados/escore_teste.csv")
+    #print(DADOS_TRAB.describe())
+    DADOS_TRAB_SEMNA = limpar_dados(DADOS_TRAB)
+    #print(DADOS_TRAB_SEMNA.describe())
+    DADOS_TRAB_PRONTO = arrumador_categoricas(DADOS_TRAB_SEMNA)
+    yhattrab = testar(model, DADOS_TRAB_PRONTO)
+    print(yhattrab)
 if __name__ == "__main__":
     main()
 

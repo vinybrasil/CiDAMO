@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Mar 21 17:33:02 2020
-
 @author: N13M4ND
 """
 
@@ -17,6 +15,7 @@ from sklearn.pipeline import FeatureUnion
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestRegressor
 
 class DataFrameSelector(BaseEstimator, TransformerMixin):
     def __init__(self, attribute_names):
@@ -67,8 +66,12 @@ def arrumador_categoricas(db):
     DADOS_PREPARADOS = full_pipeline.fit_transform(x.astype(str))
     return DADOS_PREPARADOS
 
-def criaModelo(y, labels):
+def criaModeloLinear(y, labels):
     return LinearRegression().fit(y, labels)
+
+def criaModeloRandomForest(y, labels):
+    return RandomForestRegressor().fit(y, labels)
+
 def testar(modelo, dadostestaveis):  
     return modelo.predict(dadostestaveis)
 
@@ -78,8 +81,11 @@ def enchermedia(dados, table):
     return dados
 
 def encherEscolaridade(dados, table):
+    #no trab, há 4 NaN na escolaridade, ai isso é pra tentar alivar
     dados[table] = dados[table].fillna('pós-graduação')
     return dados
+
+
 def main():
     DADOS_TREINO = pd.read_csv("dados/escore_treino.csv")
     DADOS_SEMNA = limpar_dados(DADOS_TREINO)
@@ -89,11 +95,12 @@ def main():
     TREINO, TESTE = divisor(DADOS_SEMNA)   
     DADOS_SEMLABELS, DADOS_LABELS = arrumador_treinos(TREINO)
     print(DADOS_SEMLABELS.info())
-    #print(DADOS_SEMLABELS['grau_escolaridade'].value_counts())
+    
     DADOS_SEMLABELS_TESTE, DADOS_LABELS_TESTE = arrumador_treinos(TESTE)
     DADOS_PRONTOS = arrumador_categoricas(DADOS_SEMLABELS)
     print(DADOS_PRONTOS.shape) #tirei o estado civil
-    model = criaModelo(DADOS_PRONTOS, DADOS_LABELS)
+    #model = criaModeloLinear(DADOS_PRONTOS, DADOS_LABELS)
+    model = criaModeloRandomForest(DADOS_PRONTOS, DADOS_LABELS)
     yhat = testar(model, DADOS_PRONTOS)
     print("O R2 do treino deu:", r2_score(DADOS_LABELS, yhat))
     DADOS_TREINO_PRONTO = arrumador_categoricas(DADOS_SEMLABELS_TESTE)
@@ -101,26 +108,27 @@ def main():
     print("O R2 do teste deu: ", r2_score(DADOS_LABELS_TESTE, yhatteste))
     
     DADOS_TRAB = pd.read_csv("dados/escore_teste.csv")
-    #print(DADOS_TRAB.describe())
+    
     DADOS_TRAB_SEMNA = enchermedia(DADOS_TRAB, 'experiência')
     DADOS_TRAB_SEMNA_ENCHIDO = encherEscolaridade(DADOS_TRAB_SEMNA, 'grau_escolaridade')
     print(DADOS_TRAB.info())
-    #print(DADOS_TRAB_SEMNA['grau_escolaridade'].value_counts())
+    
     DADOS_TRAB_PRONTO = arrumador_categoricas(DADOS_TRAB_SEMNA_ENCHIDO)
-    #print(DADOS_TRAB_PRONTO.describe())
-    print(DADOS_PRONTOS.shape)
+    
+    #print(DADOS_PRONTOS.shape)
     df = pd.DataFrame(data=DADOS_PRONTOS)
     df.to_csv("DADOS_PRONTOS.csv")
     df = pd.DataFrame(data=DADOS_TRAB_PRONTO)
     df.to_csv("DADOS_TRAB_PRONTOS.csv")
-    print(DADOS_TRAB_PRONTO.shape)
+    #print(DADOS_TRAB_PRONTO.shape)
     yhattrab = testar(model, DADOS_TRAB_PRONTO)
-    print(yhattrab)
+    #print(yhattrab)
     df = pd.DataFrame(data=yhattrab, index=np.arange(3000,4000))
-    
+    df.columns=['escore']
     df.to_csv("final.csv")
     
 if __name__ == "__main__":
     main()
 
 
+#por algum motivo, sempre tem que colocar o Id no csv

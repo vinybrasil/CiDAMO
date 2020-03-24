@@ -23,6 +23,7 @@ class DataFrameSelector(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
     def transform(self, X):
+        
         return X[self.attribute_names].values
     
 class MyLabelBinarizer(TransformerMixin):
@@ -47,23 +48,29 @@ def arrumador_treinos(db):
     return DADOS_SEMLABELS, DADOS_LABELS
 
 def arrumador_categoricas(db):
-    CATEGORICAS = ['grau_escolaridade']
-    x = db.drop('estado_civil', axis=1)
-    numericas = x.drop('grau_escolaridade',axis=1)
+    #CATEGORICAS = ['grau_escolaridade']
+    #x = db.drop('estado_civil', axis=1)
+    #numericas = x.drop('grau_escolaridade',axis=1)
+    
+    #CATEGORICAS = list(['grau_escolaridade'], ['estado_civil'])
+    numericas = db.drop(['grau_escolaridade', 'estado_civil'],axis=1)
+    
     print(numericas.info())
     num_pipeline = Pipeline([('selector', DataFrameSelector(list(numericas))),
                              ('imputer', SimpleImputer(strategy='median')),
                             ('std_scaler', StandardScaler())])
     
-    cat_pipeline = Pipeline([('selector', DataFrameSelector(CATEGORICAS)),
+    cat_pipeline = Pipeline([('selector', DataFrameSelector((['grau_escolaridade']))),
                             ('label_binarizer', MyLabelBinarizer())])
-    
+    cat_pipeline2 = Pipeline([('selector', DataFrameSelector((['estado_civil']))),
+                            ('label_binarizer', MyLabelBinarizer())])
     full_pipeline = FeatureUnion(transformer_list=[
     ("num_pipeline", num_pipeline),
     ("cat_pipeline", cat_pipeline),
+    ("cat_pipeline2", cat_pipeline2),
     ])
     
-    DADOS_PREPARADOS = full_pipeline.fit_transform(x.astype(str))
+    DADOS_PREPARADOS = full_pipeline.fit_transform(db.astype(str))
     return DADOS_PREPARADOS
 
 def criaModeloLinear(y, labels):
@@ -85,6 +92,9 @@ def encherEscolaridade(dados, table):
     dados[table] = dados[table].fillna('pós-graduação')
     return dados
 
+def encherCasamento(dados, table):
+    dados[table] = dados[table].fillna('viúvo')
+    return dados
 
 def main():
     DADOS_TREINO = pd.read_csv("dados/escore_treino.csv")
@@ -111,16 +121,19 @@ def main():
     
     DADOS_TRAB_SEMNA = enchermedia(DADOS_TRAB, 'experiência')
     DADOS_TRAB_SEMNA_ENCHIDO = encherEscolaridade(DADOS_TRAB_SEMNA, 'grau_escolaridade')
+    DADOS_TRAB_SEMNA_ENCHIDO_CIVIL = encherCasamento(DADOS_TRAB_SEMNA_ENCHIDO, 'estado_civil')
     print(DADOS_TRAB.info())
-    
+    #print(DADOS_TRAB_SEMNA_ENCHIDO['estado_civil'].value_counts())
     DADOS_TRAB_PRONTO = arrumador_categoricas(DADOS_TRAB_SEMNA_ENCHIDO)
     
-    #print(DADOS_PRONTOS.shape)
+    
     df = pd.DataFrame(data=DADOS_PRONTOS)
     df.to_csv("DADOS_PRONTOS.csv")
     df = pd.DataFrame(data=DADOS_TRAB_PRONTO)
     df.to_csv("DADOS_TRAB_PRONTOS.csv")
-    #print(DADOS_TRAB_PRONTO.shape)
+    print(DADOS_PRONTOS.shape)
+    print(DADOS_TRAB_PRONTO.shape)
+    
     yhattrab = testar(model, DADOS_TRAB_PRONTO)
     #print(yhattrab)
     df = pd.DataFrame(data=yhattrab, index=np.arange(3000,4000))
@@ -132,3 +145,4 @@ if __name__ == "__main__":
 
 
 #por algum motivo, sempre tem que colocar o Id no csv
+#o estado civil tem um a mais, deve ser NA

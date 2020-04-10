@@ -19,6 +19,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, r2_score
+
+
+
 #==========================================================================
 #pro labelbinarizer
 
@@ -77,7 +80,22 @@ def DATA_BINARIZADOR_RESULTADOS(data):
     data['RESULTADO_BINARIO'] = RESULTADO_BINARIO
     return data
     
-
+def DATA_DESBINARIZADOR(data):
+    
+    RESULTADO_STRING = []
+    
+    for item in data.astype(str):
+        if item == '0':
+            RESULTADO_STRING.append('False')
+        elif item == '1':
+            RESULTADO_STRING.append('True')
+        else:
+            print("algo deu ruim")
+            
+    
+    
+    return RESULTADO_STRING
+    
 def separador(data):
     
     x = data.drop('retorno', axis=1)
@@ -132,6 +150,10 @@ def criaModeloApelao(data, labels):
     grid_search.fit(data, labels)
     return grid_search.best_estimator_
 
+def criaKNN(data, labels):
+    neigh = KNeighborsClassifier(n_neighbors=5)
+    neigh.fit(data, labels)
+    return neigh
 
 def validador(y_pred, labels, nome):
     print("\nResultados da ", nome, ": \n", 
@@ -177,6 +199,27 @@ def main():
     MODELO_APELAO = criaModeloApelao(COM_TUDO_BINARIO_TREINO, DADOS_TREINO_LABELS)
     y_pred_apelao = MODELO_APELAO.predict(COM_TUDO_BINARIO_TREINO)
     validador(y_pred_apelao, DADOS_TREINO_LABELS, "random forest apelao")
+    
+    y_pred_teste = MODELO_APELAO.predict(COM_TUDO_BINARIO_TESTE)
+    print(COM_TUDO_BINARIO_TESTE.shape, DADOS_TESTE_LABELS.shape)
+    validador(y_pred_teste, DADOS_TESTE_LABELS, "random forest apelao no teste")
+    
+
+    MODELO_KNN = criaKNN(COM_TUDO_BINARIO_TREINO, DADOS_TREINO_LABELS)
+    y_pred_KNN = MODELO_KNN.predict(COM_TUDO_BINARIO_TESTE)
+    print(COM_TUDO_BINARIO_TESTE.shape, DADOS_TESTE_LABELS.shape)
+    validador(y_pred_KNN, DADOS_TESTE_LABELS, "KNN")
+    
+    TESTE = pd.read_csv("data/ads_teste.csv")
+    
+    TESTE_ARRUMADO = arrumador_categoricas(TESTE)
+    #y_pred_teste = MODELO_APELAO.predict(TESTE_ARRUMADO)
+    #y_pred_teste = RANDOM_ARVRE.predict(TESTE_ARRUMADO)
+    y_pred_teste = MODELO_KNN.predict(TESTE_ARRUMADO)
+    dados = DATA_DESBINARIZADOR(y_pred_teste)
+    df = pd.DataFrame(data=dados, index=np.arange(700,1000))
+    df.columns=['retorno']
+    df.to_csv("final2.csv")
     
 if __name__ == "__main__":
     main()

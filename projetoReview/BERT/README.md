@@ -1,3 +1,5 @@
-Para usar o BERT, usa o env bert, que tem o tensorflow=1.11 e o bert instalado, ai entra na pasta do bert
+Para usar o BERT, segue abaixo como.
 
-Rodar no colab: https://colab.research.google.com/github/tensorflow/tpu/blob/master/tools/colab/bert_finetuning_with_cloud_tpus.ipynb#scrollTo=POkof5uHaQ_c
+Esse foi o unico que funcionou: https://github.com/Shivampanwar/Bert-text-classification/blob/master/bert_language_model_with_sequence_classification.ipynb
+
+Ainda tá sem usar o algoritmo em PT-BR, mas é um caminho para a implantação. 
